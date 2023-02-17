@@ -2,53 +2,70 @@ const express = require("express");
 const session = require("express-session");
 const bcrypt = require("bcrypt");
 const path = require("path");
-const db = require("better-sqlite3")("database.db")
-
+const db = require("better-sqlite3") ("app.db")
 
 
 const app = express();
-const password = 'passord';
-const saltRounds = 10;
 
 
-bcrypt.genSalt(saltRounds, function(err, salt) {
-    bcrypt.hash(password, salt, function(err, hash) {
-        console.log(hash);
-    });
-});
+app.use(session({
+    secret: "Enlangstring",
+    resave: false,
+    saveUninitialized: false 
+}))
 
-//Åpner databasen
-function connectToDb() {
-  db = sqlite3.Database('./sosialt-samlingssted.db', (err) => {
-    if (err) {
-        console.error(err.message);
+
+app.use(express.urlencoded({extended: true})) //data fra nettsiden blir sendt til serveren
+
+
+app.get("/registrer", (req, res) => {
+    res.sendFile(path.join(__dirname, "/registrer.html"))
+})
+
+app.get("/", (req, res) => {
+    if(req.session.loggedin) {
+        res.sendFile(path.join(__dirname, "/forside.html"))
+    } else{
+        res.sendFile(path.join(__dirname, "/login.html"))
     }
-    console.log('Connected to the users datanase');
-});
-}
+})
 
+app.post("/login", async (req, res) => {
+    let login = req.body;
 
-//Oppretter og lagrer den nye brukeren
-function createUser (brukernavn, passord) {
-    //passord hash
-    bcrypt.hash(password, 10, (err, hash) => {
-        if (err) {
-            return console.error(err);
-        }
+    let userData = db.prepare("SELECT * FROM user WHERE email = ?").get(login.email);
 
+    if(await bcrypt.compare(login.password, userData.hash)) {
+        req.session.loggedin = true
+        res.redirect("/")
+    } else {
+        res.redirect("back")
+    }
+})
 
+app.post(("/addUser"), async (req, res) => {
+    let svar = req.body;
 
-        //brukernavn og passord lagres i databasen
-        const sql = `INSERT INTO users (brukernavn, passord)
-        VALUES (?, ?)`;
-        db.run(sql, [brukernavn, hash], (err) {
-            if (err) {
-                return console.error(err.message);
-            }
-            console.log(`Brukeren ${brukernavn} ble opprettet!`);
-        });
-    });
-}
+    let hash = await bcrypt.hash(svar.password, 10)
+    console.log(svar)
+    console.log(hash)
+
+    db.prepare("INSERT INTO user (name, email, hash) VALUES (?, ?, ?)").run(svar.name, svar.email, hash)
+
+    res.redirect("back")
+
+})
+
+app.get("", (req, res) => {
+    console.log(req,session)
+    if (req.session.visits == undefined) {
+        req,session,visits = 1
+    } else {
+        req.session.visits++
+    }
+
+    res.send("Antall besøkende: " + req.session.visits)
+})
 
 
 

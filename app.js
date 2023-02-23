@@ -2,7 +2,7 @@ const express = require("express");
 const session = require("express-session");
 const bcrypt = require("bcrypt");
 const path = require("path");
-const db = require("better-sqlite3") ("app.db") //En endring
+const db = require("better-sqlite3") ("app.db") 
 
 
 const app = express();
@@ -33,12 +33,14 @@ app.get("/", (req, res) => {
 app.post("/login", async (req, res) => {
     let login = req.body;
 
-    let userData = db.prepare("SELECT * FROM user WHERE email = ?").get(login.email);
+    let userData = db.prepare("SELECT * FROM user WHERE name = ?").get(login.name);
 
     if(await bcrypt.compare(login.password, userData.hash)) {
+        console.log("Rett passord")
         req.session.loggedin = true
-        res.redirect("/")
+        res.sendFile(__dirname + "/forside.html")
     } else {
+        console.log("Feil passord")
         res.redirect("back")
     }
 })
@@ -66,6 +68,8 @@ app.get("", (req, res) => {
 
     res.send("Antall besøkende: " + req.session.visits)
 })
+
+
 
 
 

@@ -3,9 +3,12 @@ const session = require("express-session");
 const bcrypt = require("bcrypt");
 const path = require("path");
 const db = require("better-sqlite3") ("app.db") 
-
+const fileUpload = require('express-fileupload');
 
 const app = express();
+
+
+
 
 
 app.use(session({
@@ -17,10 +20,13 @@ app.use(session({
 
 app.use(express.urlencoded({extended: true})) //data fra nettsiden blir sendt til serveren
 
-
+app.use(fileUpload());
 app.get("/registrer", (req, res) => {
     res.sendFile(path.join(__dirname, "/registrer.html"))
 })
+
+app.use(express.static(__dirname + '/Sosial-samlingssted'));
+
 
 app.get("/", (req, res) => {
     if(req.session.loggedin) {
@@ -55,8 +61,8 @@ app.post(("/addUser"), async (req, res) => {
     db.prepare("INSERT INTO user (name, email, hash) VALUES (?, ?, ?)").run(svar.name, svar.email, hash)
 
     res.redirect("back")
-
 })
+
 
 app.get("", (req, res) => {
     console.log(req,session)
@@ -70,7 +76,46 @@ app.get("", (req, res) => {
 })
 
 
+// rute for bilde
 
+
+//tillate bare bilder opp til 10 MB
+// app.use(
+//     fileUpload({
+//         limits: {
+//             fileSize: 10000000, 
+//         },
+//         abortOnLimit: true, 
+//     })
+// );
+
+
+app.get('/', (req, res) => {
+    res.send('Hello World!');
+});
+
+
+//tillater BARE bilder til å bli opplastet 
+app.post('/upload',  (req, res) => {
+    const { image } = req.files;
+    
+
+    // if (!image) return res.sendStatus(400);
+
+    // if (/^image/.test(image.mimetype)) return res.sendStatus(400);
+
+    image.mv(__dirname + '/upload/' + image.name);
+
+    res.sendStatus(200);
+});
+
+app.get("/lastopp", (req, res) => {
+    res.sendFile(__dirname + "/image.html")
+})
+
+
+
+//
 
 
 

@@ -8,38 +8,37 @@
 </head>
 <body>
 
-<h1>Admin side</h1>
+<h1>Admin side</h1> <!--Overskrift-->
 
-{{#if users.length}}
+{{#if users.length}} <!--Viser tabell med brukere-->
 <table>
     <thead>
-        <tr>
-            <th>ID</th>
-            <th>Username</th>
-            <th>Email</th>
-            <th>Action</th>
-        </tr>
+        <tr> <!--Begynner tabellrad-->
+            <th>ID</th> <!--Overskrift-->
+            <th>Username</th> <!--Overskrift-->
+            <th>Email</th> <!--Overskrift-->
+            <th>Action</th> <!--Overskrift-->
+        </tr> <!--Avslutter tabellrad-->
     </thead>
     <tbody>
-        {{#each users}}
+        {{#each users}} <!--Legger til ny rad til hver bruker i tabellen-->
         <tr>
-            <td>{{this.id}}</td>
-            <td>{{this.username}}</td>
-            <td>{{this.email}}</td>
+            <td>{{this.id}}</td> <!--Tabellcelle som viser brukeres bruker ID-->
+            <td>{{this.username}}</td> <!--Tabellcelle som viser brukeres brukernavn-->
+            <td>{{this.email}}</td> <!--Tabellcelle som viser brukeres e-post-->
             <td>
-                <button onclick="/deleteUser('{{this.id}}')">Delete</button>
+                <button onclick="/deleteUser('{{this.id}}')">Delete</button> <!--DELETE knapp-->
             </td>
         </tr>
         {{/each}}
-    </tbody>
-</table>
+    </tbody> <!--Avslutter tabell innhold-->
+</table> <!--Avslutter HTML tabell-->
 {{else}}
 <p>Fant ikke bruker.</p>
 {{/if}}
-<script>
-    fetchusers();
-</script>
+<script> fetchusers(); </script> <!--Javascript kode som henter data om brukere fra databasen-->
 
 <script src="/js/app.js"></script>
+
 </body>
 </html>

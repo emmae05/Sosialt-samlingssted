@@ -9,13 +9,13 @@
 </head>
 <body>
     
-<!---->
-<form action="/upload" method="POST" enctype="multipart/form-data">
-    <input type="file" name="image"/>
-    <button type="submit">upload</button>
+
+<form action="/upload" method="POST" enctype="multipart/form-data"> <!--HTML form startes og sender data til /upload siden-->
+    <input type="file" name="image"/> <!--Lar bruker velge bilde fra datamaskinen sin-->
+    <button type="submit">upload</button> <!--knapp for å laste opp fil-->
 </form>
 
-<div id="display_image"></div>
+<div id="display_image"></div> <!--Viser bildet brukeren har lastet opp-->
 
 
 </body>

@@ -2,13 +2,13 @@ const express = require("express"); //express blir importert
 const session = require("express-session"); //sessions blir importert
 const bcrypt = require("bcrypt"); //bcrypt blir importert
 const path = require("path"); //path blir importert
-const db = require("better-sqlite3") ("app.db") //db min fra sqplite3 blir importert
+const db = require("better-sqlite3") ("app.db") //db fra sqplite3 blir importert
 const fileUpload = require('express-fileupload'); //fil opplastning blir importert
-const handlebars = require('handlebars');
+const handlebars = require('handlebars'); //handlebars blir importert
 
 const app = express(); //express opprettes i en variabel vi kaller for "app"
 
-//session aktiveres  i express appen 
+//session aktiveres i express appen 
 app.use(session({
     secret: "Enlangstring",
     resave: false,
@@ -16,7 +16,9 @@ app.use(session({
 }))
 
 
-app.use(express.urlencoded({extended: true}))//data fra nettsiden blir sendt til serveren
+//data fra nettsiden blir sendt til serveren
+app.use(express.urlencoded({extended: true}))
+
 
 //funksjon for filopplastning funksjonalitet
 app.use(fileUpload());
@@ -24,8 +26,8 @@ app.get("/registrer", (req, res) => {
     res.sendFile(path.join(__dirname, "/registrer.html"))
 })
 
+//filer fra mappen Sosialt-samlingssted kan serveres direkte fra server
 app.use(express.static(__dirname + '/Sosial-samlingssted'));
-
 
 
 //sjekker om brukeren er logget inn på nettsiden med loggedin requesten
@@ -67,7 +69,7 @@ app.post(("/addUser"), async (req, res) => {
     res.redirect("back")
 })
 
-//
+//rute for å sjekke om bruker har en aktiv session
 app.get("", (req, res) => {
     console.log(req.session)
     if (req.session.visits == undefined) {
@@ -105,49 +107,35 @@ app.get("/lastopp", (req, res) => {
 })
 
 //////////////////////////////////////////////////////////////////////////////
-//rute for admin siden
 
+//rute for admin siden
 app.get("/admin", (req, res) => {
     let users = db.prepare("SELECT * FROM user").all(); //henter brukere fra databasen
 
     res.render("admin", { users: users }); //data til bruker sendes til admin.hbs
 });
 
-app.set('view engine', 'hbs');
-app.set('views', __dirname + '/views');
+app.set('view engine', 'hbs'); //express tolker hbs
+app.set('views', __dirname + '/views'); //hbs filer ligger i mappen "views" 
 
 
-app.use(express.static('public'));
-app.use(express.json());
+app.use(express.static('public')); //leverer statiske filer fra mappen "public"
+app.use(express.json()); //express tolker forespørsler som JSON fil
 
 
 //admin kan slette brukere fra databasen på nettsiden
 app.post('/deleteUser', (req, res) => {
-    const id = req.body.userId;
-    const sql = 'DELETE FROM user WHERE id = ?';
+    const id = req.body.userId; //henter brukerens ID
+    const sql = 'DELETE FROM user WHERE id = ?'; //forbereder SQL spørring for å slette en rad fra tabellen som heter "user"
     db.run(sql, [id], function(err) {
         if (err) {
-            console.error(err.message);
-            res.status(500).send({ error: 'Kunne ikke slette bruker fra database' });
+            console.error(err.message); //returerer en feilmelding om det oppstår en feil ellers sendes det en annen melding
+            res.status(500).send({ error: 'Kunne ikke slette bruker fra database' }); //sendes om det akjer en feil under SQL spørringen
         } else {
-            res.send({ message: `User with ID ${id} delted` });
+            res.send({ message: `User with ID ${id} deleted` }); //sendes til klient når SQL spørringesn blir fullført uten problemer
         }
     });
 });
-
-
-app.get('/user', (req, res) => {
-    const sql = 'SELECT * FROM user';
-    db.all(sql, [], (err, rows) => {
-        if (err) {
-            console.error(err.message);
-            res.status(500).send({ error: 'Could not retrieve users from database'});
-        } else {
-            res.send(rows);
-        }
-    });
-});
-
 
 /////////////////////////////////////////////////////////////////////////////////
 
@@ -166,23 +154,24 @@ function logout() {
  //   res.redirect("/");
 //});
 
+//rute for å håndtere siden når en klient sender /logout forespørsel
 app.get('/logout', (req, res) => {
-    req.session.destroy((err) => {
+    req.session.destroy((err) => { //sletter informasjon om brukeren i den sesjonen (identifikator). bruker blir tvunget til å logge seg inn igjen for å bruke appen
         if(err) {
             console.log(err);
         } else {
-            res.redirect('/')
+            res.redirect('/') //brukeren sendes tilbake til hovedsiden om ødeleggelse av sesjonen lykkes
         }
     });
 });
 
 
-
+//rute for bruker pålogging basert på om bruker har bruker eller ikke
 app.get("/", (req, res) => {
     if (req.session.loggedin) {
         res.sendFile(path.join(__dirname, "/forside.html")); //sender brukere til forside hvis logget inn
     } else {
-        res.sendFile(path.join(__dirname, "/login.html")); //sender brukere til login hvis de ikke har en bruker registrert
+        res.sendFile(path.join(__dirname, "/login.html")); //sender brukere til login hvis de ikke har en profil registrert
     }
 });
 

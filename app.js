@@ -54,6 +54,7 @@ app.post("/login", async (req, res) => {
 })
 
 //rute for å lagre data når en ny bruker registreres
+//brukerens passord hashes og blir lagret i databasen
 app.post(("/addUser"), async (req, res) => {
     let svar = req.body;
 
@@ -103,47 +104,13 @@ app.get("/lastopp", (req, res) => {
     res.sendFile(__dirname + "/image.html")
 })
 
+//////////////////////////////////////////////////////////////////////////////
 //rute for admin siden
-app.get('/admin', function(req, res) {
-    res.render('admin');
-});
-
 
 app.get("/admin", (req, res) => {
-    let users = db.prepare("SELECT * FROM users").all(); //henter brukere fra databasen
+    let users = db.prepare("SELECT * FROM user").all(); //henter brukere fra databasen
 
     res.render("admin", { users: users }); //data til bruker sendes til admin.hbs
-});
-
-function deleteUser(userid) {
-    fetch("/deleteUser", {
-        method: "POST", 
-        body: JSON.stringify({ userId: userId }),
-        headers: {
-            "Content-Type": "application/json"
-        }
-    })
-    .then(response => {
-        if (!response.ok) {
-            throw new Error("Network response was not ok");
-        }
-        return response.json();
-    })
-    .then(data => {
-        console.log(data.message);
-        location.reload();
-    })
-    .catch(error => {
-        console.error("There was a problem deleting the user:", error);
-    });
-}
-
-app.post("/deleteUser", (req, res) => {
-    let userId = req.body.userId;
-
-    db.prepare("DELETE FROM user WHERE id = ?").run(userId);
-
-    res.json({ message: "User deleted" });
 });
 
 app.set('view engine', 'hbs');
@@ -156,25 +123,25 @@ app.use(express.json());
 
 //admin kan slette brukere fra databasen på nettsiden
 app.post('/deleteUser', (req, res) => {
-    const id = req.body.id;
-    const sql = 'DELETE FROM users WHERE id = ?';
+    const id = req.body.userId;
+    const sql = 'DELETE FROM user WHERE id = ?';
     db.run(sql, [id], function(err) {
         if (err) {
             console.error(err.message);
             res.status(500).send({ error: 'Kunne ikke slette bruker fra database' });
         } else {
-            res.send({ message: `User with ID ${id} deleted` });
+            res.send({ message: `User with ID ${id} delted` });
         }
     });
 });
 
 
-app.get('/users', (req, res) => {
-    const sql = 'SELECT * FROM users';
+app.get('/user', (req, res) => {
+    const sql = 'SELECT * FROM user';
     db.all(sql, [], (err, rows) => {
         if (err) {
             console.error(err.message);
-            res.status(500).send({ erroe: 'Could not retrieve users from database'});
+            res.status(500).send({ error: 'Could not retrieve users from database'});
         } else {
             res.send(rows);
         }
@@ -182,6 +149,7 @@ app.get('/users', (req, res) => {
 });
 
 
+/////////////////////////////////////////////////////////////////////////////////
 
 
 //logg ut for brukere
@@ -193,10 +161,21 @@ function logout() {
 }
 
 //rute for logg ut
-app.get("/logout", (req,res) => {
-    req.session.loggedin = false;
-    res.redirect("/");
+//app.get("/logout", (req,res) => {
+ //   req.session.loggedin = false;
+ //   res.redirect("/");
+//});
+
+app.get('/logout', (req, res) => {
+    req.session.destroy((err) => {
+        if(err) {
+            console.log(err);
+        } else {
+            res.redirect('/')
+        }
+    });
 });
+
 
 
 app.get("/", (req, res) => {
@@ -208,6 +187,11 @@ app.get("/", (req, res) => {
 });
 
 
+//Rute for at bruker kan slette sin egen profil
+app.post('/delete-account', function(req, res) {
+    //sletter konto fra databasen og deretter redirecter til login siden
+});
+
 
 //
 
@@ -216,4 +200,4 @@ app.get("/", (req, res) => {
 const PORT = 3000;
 app.listen("3000", () => {
     console.log("Server listening at http://localhost:3000")
-})
+});

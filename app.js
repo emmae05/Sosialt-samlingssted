@@ -4,6 +4,7 @@ const bcrypt = require("bcrypt"); //bcrypt blir importert
 const path = require("path"); //path blir importert
 const db = require("better-sqlite3") ("app.db") //db min fra sqplite3 blir importert
 const fileUpload = require('express-fileupload'); //fil opplastning blir importert
+const handlebars = require('handlebars');
 
 const app = express(); //express opprettes i en variabel vi kaller for "app"
 
@@ -24,6 +25,7 @@ app.get("/registrer", (req, res) => {
 })
 
 app.use(express.static(__dirname + '/Sosial-samlingssted'));
+
 
 
 //sjekker om brukeren er logget inn på nettsiden med loggedin requesten
@@ -66,9 +68,9 @@ app.post(("/addUser"), async (req, res) => {
 
 //
 app.get("", (req, res) => {
-    console.log(req,session)
+    console.log(req.session)
     if (req.session.visits == undefined) {
-        req,session,visits = 1
+        req.session.visits = 1
     } else {
         req.session.visits++
     }
@@ -78,19 +80,6 @@ app.get("", (req, res) => {
 
 
 // rute for bilde
-
-
-//tillate bare bilder opp til 10 MB
-// app.use(
-//     fileUpload({
-//         limits: {
-//             fileSize: 10000000, 
-//         },
-//         abortOnLimit: true, 
-//     })
-// );
-
-
 app.get('/', (req, res) => {
     res.send('Hello World!');
 });
@@ -99,7 +88,6 @@ app.get('/', (req, res) => {
 //tillater BARE bilder til å bli opplastet 
 app.post('/upload',  (req, res) => {
     const { image } = req.files;
-    
 
     // if (!image) return res.sendStatus(400);
 
@@ -115,14 +103,56 @@ app.get("/lastopp", (req, res) => {
     res.sendFile(__dirname + "/image.html")
 })
 
+//rute for admin siden
 app.get('/admin', function(req, res) {
     res.render('admin');
 });
 
-app.use(express.static('¨public'));
-app.use(express.json());
+
+app.get("/admin", (req, res) => {
+    let users = db.prepare("SELECT * FROM users").all(); //henter brukere fra databasen
+
+    res.render("admin", { users: users }); //data til bruker sendes til admin.hbs
+});
+
+function deleteUser(userid) {
+    fetch("/deleteUser", {
+        method: "POST", 
+        body: JSON.stringify({ userId: userId }),
+        headers: {
+            "Content-Type": "application/json"
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error("Network response was not ok");
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log(data.message);
+        location.reload();
+    })
+    .catch(error => {
+        console.error("There was a problem deleting the user:", error);
+    });
+}
+
+app.post("/deleteUser", (req, res) => {
+    let userId = req.body.userId;
+
+    db.prepare("DELETE FROM user WHERE id = ?").run(userId);
+
+    res.json({ message: "User deleted" });
+});
 
 app.set('view engine', 'hbs');
+app.set('views', __dirname + '/views');
+
+
+app.use(express.static('public'));
+app.use(express.json());
+
 
 //admin kan slette brukere fra databasen på nettsiden
 app.post('/deleteUser', (req, res) => {
@@ -151,6 +181,31 @@ app.get('/users', (req, res) => {
     });
 });
 
+
+
+
+//logg ut for brukere
+function logout() {
+    //sletter brukerdata og variabler tilbakestilles
+    document.cookie = "user_id=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+    //tilbake til logg inn siden
+    window.location.href = "login.html";
+}
+
+//rute for logg ut
+app.get("/logout", (req,res) => {
+    req.session.loggedin = false;
+    res.redirect("/");
+});
+
+
+app.get("/", (req, res) => {
+    if (req.session.loggedin) {
+        res.sendFile(path.join(__dirname, "/forside.html")); //sender brukere til forside hvis logget inn
+    } else {
+        res.sendFile(path.join(__dirname, "/login.html")); //sender brukere til login hvis de ikke har en bruker registrert
+    }
+});
 
 
 

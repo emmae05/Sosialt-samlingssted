@@ -1,0 +1,4 @@
+{
+    "appService.defaultWebAppToDeploy": "/subscriptions/b6bd85db-37fb-4845-acf2-b468d148f784/resourceGroups/minnettside_group/providers/Microsoft.Web/sites/minnettside",
+    "appService.deploySubpath": "."
+}

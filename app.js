@@ -129,7 +129,7 @@ app.post('/deleteUser', (req, res) => {
     const sql = 'DELETE FROM user WHERE id = ?'; //forbereder SQL spørring for å slette en rad fra tabellen som heter "user"
     db.run(sql, [id], function(err) {
         if (err) {
-            console.error(err.message); //returerer en feilmelding om det oppstår en feil ellers sendes det en annen melding
+            console.error(err.message); //returerer en feilmfelding om det oppstår en feil ellers sendes det en annen melding
             res.status(500).send({ error: 'Kunne ikke slette bruker fra database' }); //sendes om det akjer en feil under SQL spørringen
         } else {
             res.send({ message: `User with ID ${id} deleted` }); //sendes til klient når SQL spørringesn blir fullført uten problemer
